@@ -1,14 +1,31 @@
-# structtag [![](https://github.com/fatih/structtag/workflows/build/badge.svg)](https://github.com/fatih/structtag/actions) [![PkgGoDev](https://pkg.go.dev/badge/github.com/fatih/structtag)](https://pkg.go.dev/github.com/fatih/structtag)
+# structtag [![](https://github.com/alfatraining/structtag/workflows/build/badge.svg)](https://github.com/alfatraining/structtag/actions) [![PkgGoDev](https://pkg.go.dev/badge/github.com/alfatraining/structtag)](https://pkg.go.dev/github.com/alfatraining/structtag)
 
-structtag provides a way of parsing and manipulating struct tag Go fields. It's used by tools like [gomodifytags](https://github.com/fatih/gomodifytags). For more examples, checkout [the projects using structtag](https://pkg.go.dev/github.com/fatih/structtag?tab=importedby).
+`structtag` is a library for parsing struct tags in Go during static analysis. 
+It is designed to provide a simple API for parsing struct field tags in Go code. 
+This fork focuses exclusively on **reading struct tags** and is not intended for modifying or rewriting them.
+It also drops support for accessing the options of a struct tag individually.
 
-# Install
+This project is a fork of [`fatih/structtag`](https://github.com/fatih/structtag), originally created by Fatih Arslan. 
+The primary changes in this fork are:
+
+- struct tag values are treated as blobs, options are not treated individually,
+- the API surface is minimized, just so that the functionality used by [`4meepo/tagalign`](https://github.com/4meepo/tagalign) is provided.
+
+---
+
+## Install
+
+To install the package:
 
 ```bash
-go get github.com/fatih/structtag
+go get github.com/alfatraining/structtag
 ```
 
-# Example
+---
+
+## Example Usage
+
+The following example demonstrates how to parse and output struct tags using `structtag`:
 
 ```go
 package main
@@ -16,57 +33,60 @@ package main
 import (
 	"fmt"
 	"reflect"
-	"sort"
 
-	"github.com/fatih/structtag"
+	"github.com/alfatraining/structtag"
 )
 
 func main() {
-	type t struct {
-		t string `json:"foo,omitempty,string" xml:"foo"`
+	type Example struct {
+		Field string `json:"foo,omitempty" xml:"bar"`
 	}
 
-	// get field tag
-	tag := reflect.TypeOf(t{}).Field(0).Tag
+	// Get the struct tag from the field
+	tag := reflect.TypeOf(Example{}).Field(0).Tag
 
-	// ... and start using structtag by parsing the tag
+	// Parse the tag using structtag
 	tags, err := structtag.Parse(string(tag))
 	if err != nil {
 		panic(err)
 	}
 
-	// iterate over all tags
+	// Iterate over all tags
 	for _, t := range tags.Tags() {
-		fmt.Printf("tag: %+v\n", t)
+		fmt.Printf("Key: %s, Value: %v\n", t.Key, t.Value)
 	}
-
-	// get a single tag
-	jsonTag, err := tags.Get("json")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(jsonTag)         // Output: json:"foo,omitempty,string"
-	fmt.Println(jsonTag.Key)     // Output: json
-	fmt.Println(jsonTag.Name)    // Output: foo
-	fmt.Println(jsonTag.Options) // Output: [omitempty string]
-
-	// change existing tag
-	jsonTag.Name = "foo_bar"
-	jsonTag.Options = nil
-	tags.Set(jsonTag)
-
-	// add new tag
-	tags.Set(&structtag.Tag{
-		Key:     "hcl",
-		Name:    "foo",
-		Options: []string{"squash"},
-	})
-
-	// print the tags
-	fmt.Println(tags) // Output: json:"foo_bar" xml:"foo" hcl:"foo,squash"
-
-	// sort tags according to keys
-	sort.Sort(tags)
-	fmt.Println(tags) // Output: hcl:"foo,squash" json:"foo_bar" xml:"foo"
+	// Output:
+	// Key: json, Value: foo,omitempty
+	// Key: xml, Value: bar
 }
 ```
+
+---
+
+## API Overview
+
+### Parsing Struct Tags
+Use `Parse` to parse a struct field's tag into a `Tags` object:
+```go
+tags, err := structtag.Parse(`json:"foo,omitempty" xml:"bar"`)
+if err != nil {
+    panic(err)
+}
+```
+
+### Accessing Tags
+- **Retrieve all tags**:
+  ```go
+  allTags := tags.Tags()
+  ```
+
+### Inspecting Tags
+- **Key**: The key of the tag (e.g., `json` or `xml`).
+- **Value**: The value of the tag (e.g., `"foo,omitempty"` for `json:"foo,omitempty"`).
+
+---
+
+## Acknowledgments
+
+This project is based on [`fatih/structtag`](https://github.com/fatih/structtag), created by Fatih Arslan.
+Inspiration for the style of this README was taken from [tylergannon/structtag](https://github.com/tylergannon/structtag), created by Tyler Gannon.

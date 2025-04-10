@@ -1,3 +1,3 @@
-module github.com/fatih/structtag
+module github.com/alfatraining/structtag
 
-go 1.12
+go 1.22
